@@ -1,0 +1,42 @@
+metadata:
+  name: model_name # nuclio dashboard name, lower case
+  namespace: cvat
+  annotations:
+    name: Model Name # cvat dashboard name
+    type: detector # type of model
+    framework: pytorch # type of framework
+    spec: | # model classes / labels
+      [
+        { "id": 0, "name": "person" },
+        { "id": 1, "name": "bicycle" }
+      ]
+spec:
+  description: Model Description # cvat dashboard description
+  runtime: 'python:3.6' # model python version
+  handler: main:handler
+  eventTimeout: 30s
+  build:
+    image: cvat/model-name # the name of the model to be build
+    baseImage: username/model-name:version # base image from docker hub, version will automatic change with model deployment function
+
+    directives:
+      preCopy:
+        - kind: USER
+          value: root
+        - kind: WORKDIR
+          value: /opt/nuclio # symlink/docker volume from model folder to /opt/nuclio in docker container
+
+  triggers:
+    myHttpTrigger:
+      maxWorkers: 2
+      kind: 'http'
+      workerAvailabilityTimeoutMilliseconds: 10000
+      attributes:
+        maxRequestBodySize: 33554432 # 32MB
+
+  platform:
+    attributes:
+      restartPolicy:
+        name: always
+        maximumRetryCount: 3
+      mountMode: volume
